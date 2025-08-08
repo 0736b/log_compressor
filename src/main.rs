@@ -1,5 +1,4 @@
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 use zip::write::{FileOptions, ZipWriter};
@@ -27,13 +26,12 @@ fn compress_log_file(log_path: &PathBuf) -> Result<(), Box<dyn std::error::Error
 
     let zip_file = File::create(&zip_path)?;
     let mut zip = ZipWriter::new(zip_file);
-    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated).large_file(true);
 
     zip.start_file(log_file_name, options)?;
-    let mut buffer = Vec::new();
+
     let mut f = File::open(log_path)?;
-    f.read_to_end(&mut buffer)?;
-    zip.write_all(&buffer)?;
+    std::io::copy(&mut f, &mut zip)?;
 
     zip.finish()?;
     info!("Compressed '{}'", zip_path.file_name().unwrap().to_str().unwrap());
