@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 use zip::write::{FileOptions, ZipWriter};
 
+const BUFFER_SIZE: usize = 1048576;     // 1MB
+
 fn is_file_in_use(file_path: &Path) -> bool {
     OpenOptions::new().write(true).open(file_path).is_err()
 }
@@ -47,7 +49,7 @@ fn compress_log_file(
 
     let mut source_file = File::open(log_path)?;
 
-    let mut buffer = [0; 8192];
+    let mut buffer = vec![0; BUFFER_SIZE];
     loop {
         let bytes_read = source_file.read(&mut buffer)?;
         if bytes_read == 0 {
