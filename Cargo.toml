@@ -1,0 +1,11 @@
+[package]
+name = "log_compressor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+walkdir = "2"
+zip = "0.6"
+chrono = "0.4"
+flexi_logger = "0.27"
+log = "0.4"
