@@ -1,23 +1,27 @@
+use chrono::Local;
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use rayon::prelude::*;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 use zip::write::{FileOptions, ZipWriter};
-use chrono::Local;
-use rayon::prelude::*;
-
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 fn is_file_in_use(file_path: &Path) -> bool {
     OpenOptions::new().write(true).open(file_path).is_err()
 }
 
-
-fn compress_log_file(log_path: &PathBuf, mp: &MultiProgress) -> Result<(), Box<dyn std::error::Error>> {
+fn compress_log_file(
+    log_path: &PathBuf,
+    mp: &MultiProgress,
+) -> Result<(), Box<dyn std::error::Error>> {
     let log_file_name = log_path.file_name().unwrap().to_str().unwrap();
 
     if is_file_in_use(log_path) {
-        mp.println(format!("File '{}' is currently in use, skipped", log_file_name))?;
+        mp.println(format!(
+            "File '{}' is currently in use, skipped",
+            log_file_name
+        ))?;
         return Ok(());
     }
 
@@ -54,17 +58,16 @@ fn compress_log_file(log_path: &PathBuf, mp: &MultiProgress) -> Result<(), Box<d
     }
 
     zip.finish()?;
-    
+
     pb.finish_with_message(format!("Compressed: {}", log_file_name));
-    
+
     match std::fs::remove_file(log_path) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => mp.println(format!("Failed to remove '{}': {}", log_file_name, e))?,
     }
 
     Ok(())
 }
-
 
 fn main() {
     println!("===== Start =====");
@@ -87,9 +90,14 @@ fn main() {
         .filter_map(|e| e.ok())
         .map(|entry| entry.into_path())
         .filter(|path| {
-            path.is_file() &&
-            path.extension().map_or(false, |ext| ext == "log") &&
-            !path.file_name().unwrap().to_str().unwrap().contains("log_compressor")
+            path.is_file()
+                && path.extension().map_or(false, |ext| ext == "log")
+                && !path
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .contains("log_compressor")
         })
         .collect();
 
@@ -97,7 +105,12 @@ fn main() {
 
     log_files.into_par_iter().for_each(|path| {
         if let Err(e) = compress_log_file(&path, &m) {
-            m.println(format!("Failed to process file '{}': {}", path.display(), e)).unwrap();
+            m.println(format!(
+                "Failed to process file '{}': {}",
+                path.display(),
+                e
+            ))
+            .unwrap();
         }
     });
 
