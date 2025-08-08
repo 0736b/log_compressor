@@ -9,3 +9,5 @@ zip = "0.6"
 chrono = "0.4"
 flexi_logger = "0.27"
 log = "0.4"
+rayon = "1.10.0"
+indicatif = { version = "0.17.8", features = ["rayon"] } 
